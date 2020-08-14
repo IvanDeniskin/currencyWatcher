@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CurrencyWatcher</string>
+    <string name="date_error">Wrong Date</string>
 </resources>

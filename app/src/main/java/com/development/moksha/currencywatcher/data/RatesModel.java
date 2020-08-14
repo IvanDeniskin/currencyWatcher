@@ -1,7 +1,6 @@
 package com.development.moksha.currencywatcher.data;
 
 import android.app.Application;
-import android.util.Log;
 
 import com.development.moksha.currencywatcher.config.ConfigData;
 import com.development.moksha.currencywatcher.data.local.DatabaseAdapter;
@@ -14,19 +13,13 @@ import com.google.gson.JsonObject;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 import androidx.lifecycle.AndroidViewModel;
-import io.reactivex.Scheduler;
-import io.reactivex.SingleObserver;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.observers.DisposableSingleObserver;
-import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.CompletableObserver;
-import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
@@ -49,7 +42,7 @@ public class RatesModel extends AndroidViewModel {
         rates = new LinkedList<>();
     }
 
-    public  void updateRx(final ModelListener listener){
+    public  void update(final ModelListener listener){
         if(rates.isEmpty()) {
             mApi.getLatestRx().subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
@@ -65,7 +58,7 @@ public class RatesModel extends AndroidViewModel {
                                 rate.setValue(Float.valueOf(entry.getValue().toString()));
                                 rates.add(rate);
                             }
-                            mDatabase.updateRatesList(rates).subscribeOn(Schedulers.io());
+                            mDatabase.updateRatesList(rates).subscribeOn(Schedulers.io()).subscribe();
                             listener.onResponse(rates);
                         }
 
@@ -75,7 +68,8 @@ public class RatesModel extends AndroidViewModel {
                             mDatabase.getRatesList()
                                     .subscribeOn(Schedulers.io())
                                     .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe(list -> {listener.onResponse(list);});
+                                    .subscribe(list -> {
+                                        listener.onResponse(list);});
                         }
                     });
         }

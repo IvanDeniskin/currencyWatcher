@@ -3,22 +3,27 @@ package com.development.moksha.currencywatcher.ui;
 import androidx.activity.ComponentActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.development.moksha.currencywatcher.R;
 import com.development.moksha.currencywatcher.data.Rate;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.lang.reflect.Field;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -32,6 +37,7 @@ public class MainActivity extends ComponentActivity implements IView {
     Calendar mCalendar;
     private ProgressDialog progressDialog;
     final String etDateTextID = "etDateText";
+    SwipeRefreshLayout mSwipeLayout;
 
 
 
@@ -47,11 +53,18 @@ public class MainActivity extends ComponentActivity implements IView {
         mPresenter.init();
         mCalendar = new GregorianCalendar();
         etDate = (EditText)findViewById(R.id.etDate);
-      //  etDate.setSelected(false);
         etDate.addTextChangedListener(new DateWatcher(etDate));
         etDate.setOnEditorActionListener(onFinishListener);
-
         refreshDate();
+
+        mSwipeLayout = (SwipeRefreshLayout)findViewById(R.id.refreshLayout);
+        prepareSwipeLayout();
+        mSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                mPresenter.dateChanged(mCalendar);
+            }
+        });
     }
 
     private void refreshDate(){
@@ -82,11 +95,15 @@ public class MainActivity extends ComponentActivity implements IView {
     @Override
     public void update(List<Rate> data) {
         mAdapter.update(data);
+        if(mSwipeLayout.isRefreshing())
+            mSwipeLayout.setRefreshing(false);
     }
 
     @Override
     public void showErrorMessage(final String message){
         Snackbar.make(findViewById(R.id.rootLayout), message, Snackbar.LENGTH_LONG).show();
+        if(mSwipeLayout.isRefreshing())
+            mSwipeLayout.setRefreshing(false);
     }
 
     @Override
@@ -133,7 +150,19 @@ public class MainActivity extends ComponentActivity implements IView {
             mPresenter.dateChanged(mCalendar);
         }
         catch (NumberFormatException e){
-            showErrorMessage("Wrong date");
+            showErrorMessage(getString(R.string.date_error));
+        }
+    }
+
+    void prepareSwipeLayout(){
+        //Hide busy indicator
+        try{
+            Field f = mSwipeLayout.getClass().getDeclaredField("mCircleView");
+            f.setAccessible(true);
+            ImageView img = (ImageView)f.get(mSwipeLayout);
+            img.setAlpha(0.0f);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
         }
     }
 

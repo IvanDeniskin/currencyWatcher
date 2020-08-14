@@ -22,7 +22,7 @@ public class Presenter implements IPresenter {
     @Override
     public void init() {
         mView.showLoading();
-        mData.updateRx(listener);
+        mData.update(listener);
     }
 
     @Override
@@ -30,6 +30,7 @@ public class Presenter implements IPresenter {
         mView.showLoading();
         mData.updateByDate(listener, date);
     }
+
 
     ModelListener listener = new ModelListener() {
         @Override
